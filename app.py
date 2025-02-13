@@ -47,18 +47,24 @@ def kommo_webhook():
 
         print(f"📝 Resposta gerada: {reply}")
 
-        # Enviar resposta ao Kommo
-# Enviar resposta ao Kommo
+        # Enviar resposta ao Kommo com timeout
         response_payload = {
             "lead_id": lead_id,
             "message": reply
         }
-        response = requests.post(KOMMO_WEBHOOK_URL, json=response_payload)
 
-        print(f"📤 Resposta enviada ao Kommo, status: {response.status_code}")
+        try:
+            response = requests.post(KOMMO_WEBHOOK_URL, json=response_payload, timeout=10)  # Timeout de 10 segundos
+            print(f"📤 Resposta enviada ao Kommo, status: {response.status_code}")
 
-        if response.status_code != 200:
-            return jsonify({"error": "Erro ao enviar mensagem ao Kommo", "details": response.text}), 500
+            if response.status_code != 200:
+                return jsonify({"error": "Erro ao enviar mensagem ao Kommo", "details": response.text}), 500
+        except requests.Timeout:
+            print("⏳ Timeout ao enviar mensagem ao Kommo!")
+            return jsonify({"error": "Timeout ao enviar mensagem ao Kommo"}), 504
+        except requests.RequestException as e:
+            print(f"⚠️ Erro ao enviar a resposta para o Kommo: {e}")
+            return jsonify({"error": "Erro ao enviar mensagem ao Kommo", "details": str(e)}), 500
 
         return jsonify({"reply": reply})
 
