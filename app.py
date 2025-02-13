@@ -14,9 +14,9 @@ openai.api_key = OPENAI_API_KEY
 
 # Função para gerar resposta da IA
 def get_chatgpt_response(message):
-    response = client = openai.OpenAI(api_key=OPENAI_API_KEY)
-    response = client.chat.completions.create(
-        model="gpt-4o",
+    client = openai.OpenAI(api_key=OPENAI_API_KEY)
+response = client.chat.completions.create(
+     model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "Você é Luiza, assistente digital da equipe Evelyn Liu. Responda de forma acolhedora e humanizada, sem se passar pela Evelyn, e guie os leads para o VIP 21D ou consultas na Table Clinic."},
             {"role": "user", "content": message}
