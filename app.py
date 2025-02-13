@@ -10,7 +10,10 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 KOMMO_WEBHOOK_URL = os.getenv("KOMMO_WEBHOOK_URL")
 
 # Configuração do cliente OpenAI
-client = openai.OpenAI(api_key=OPENAI_API_KEY)
+import openai
+
+client = openai.Client(api_key=OPENAI_API_KEY)
+
 
 # Função para gerar resposta da IA
 def get_chatgpt_response(message):
