@@ -1,6 +1,5 @@
 flask
-openai==1.2.4  # OU a versão mais recente disponível
+openai>=1.2.4
 requests
 gunicorn
-
 
