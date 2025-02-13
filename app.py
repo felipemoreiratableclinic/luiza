@@ -24,8 +24,9 @@ def get_chatgpt_response(message):
     return response.choices[0].message.content
 
 # Rota do Webhook do Kommo
-@app.route("/kommo-webhook", methods=["POST"])
+@app.route("/kommo-webhook", methods=["POST", "GET"])
 def kommo_webhook():
+print(f"📩 Recebendo mensagem: {data}")
     try:
         data = request.json
         user_message = data.get("message", "")
