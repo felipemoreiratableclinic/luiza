@@ -14,29 +14,38 @@ client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 # Função para gerar resposta da IA
 def get_chatgpt_response(message):
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "Você é Luiza, assistente digital da equipe Evelyn Liu. Responda de forma acolhedora e humanizada, sem se passar pela Evelyn, e guie os leads para o VIP 21D ou consultas na Table Clinic."},
-            {"role": "user", "content": message}
-        ]
-    )
-    return response.choices[0].message.content
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Você é Luiza, assistente digital da equipe Evelyn Liu. Responda de forma acolhedora e humanizada, sem se passar pela Evelyn, e guie os leads para o VIP 21D ou consultas na Table Clinic."},
+                {"role": "user", "content": message}
+            ],
+            timeout=10  # Timeout de 10 segundos para evitar problemas
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        print(f"🔥 Erro ao gerar resposta da OpenAI: {e}")
+        return "Desculpe, estou enfrentando dificuldades técnicas no momento."
 
 # Rota do Webhook do Kommo
 @app.route("/kommo-webhook", methods=["POST", "GET"])
 def kommo_webhook():
-print(f"📩 Recebendo mensagem: {data}")
     try:
         data = request.json
+        print(f"📩 Recebendo dados do Kommo: {data}")
+
         user_message = data.get("message", "")
         lead_id = data.get("lead_id", "")
 
         if not user_message:
+            print("🚨 Mensagem vazia recebida!")
             return jsonify({"error": "Mensagem vazia recebida"}), 400
 
         # Gerar resposta da IA
         reply = get_chatgpt_response(user_message)
+
+        print(f"📝 Resposta gerada: {reply}")
 
         # Enviar resposta ao Kommo
         response_payload = {
@@ -44,6 +53,8 @@ print(f"📩 Recebendo mensagem: {data}")
             "message": reply
         }
         response = requests.post(KOMMO_WEBHOOK_URL, json=response_payload)
+
+        print(f"📤 Resposta enviada ao Kommo, status: {response.status_code}")
 
         if response.status_code != 200:
             return jsonify({"error": "Erro ao enviar mensagem ao Kommo", "details": response.text}), 500
