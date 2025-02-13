@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 import openai
 import requests
@@ -5,11 +6,11 @@ import requests
 app = Flask(__name__)
 
 # Configuração da OpenAI API Key
-OPENAI_API_KEY = "SUA_CHAVE_OPENAI_AQUI"
-openai.api_key = OPENAI_API_KEY
+OPENAI_API_KEY = os.getenv("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")  # Pegando a chave da variável de ambiente
+openai.api_key = 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
 
 # URL do Webhook do Kommo
-KOMMO_WEBHOOK_URL = "SUA_URL_DO_WEBHOOK_DO_KOMMO_AQUI"
+KOMMO_WEBHOOK_URL = os.getenv("https://luiza-assistente.onrender.com")  # Pegando a URL do Webhook do Kommo
 
 # Função para gerar resposta da IA
 def get_chatgpt_response(message):
@@ -31,14 +32,15 @@ def kommo_webhook():
     if user_message:
         reply = get_chatgpt_response(user_message)
 
-        # Enviar resposta ao Kommo
+        # Enviar resposta para o Kommo
         response_payload = {
             "lead_id": lead_id,
             "message": reply
         }
-        requests.post(KOMMO_WEBHOOK_URL, json=response_payload)
+        requests.post(https://luiza-assistente.onrender.com, json=response_payload)
 
     return jsonify({"reply": reply})
 
 if __name__ == "__main__":
-    app.run(port=5000)
+    port = int(os.environ.get("PORT", 10000))  # Render define a porta, então pegamos dinamicamente
+    app.run(host="0.0.0.0", port=port, debug=True)  # Agora Flask escuta na porta correta
