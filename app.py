@@ -14,15 +14,14 @@ openai.api_key = OPENAI_API_KEY
 
 # Função para gerar resposta da IA
 def get_chatgpt_response(message):
-    client = openai.OpenAI()
-    response = client.chat.completions.create(
+    response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "Você é Luiza, assistente digital da equipe Evelyn Liu. Responda de forma acolhedora e humanizada, sem se passar pela Evelyn, e guie os leads para o VIP 21D ou consultas na Table Clinic."},
             {"role": "user", "content": message}
         ]
     )
-    return response.choices[0].message.content
+    return response["choices"][0]["message"]["content"]
 
 # Rota do Webhook do Kommo
 @app.route("/kommo-webhook", methods=["POST"])
@@ -64,4 +63,3 @@ def home():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))  # Render define a porta, então pegamos dinamicamente
     app.run(host="0.0.0.0", port=port, debug=True)
-
