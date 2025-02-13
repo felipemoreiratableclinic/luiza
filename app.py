@@ -23,6 +23,7 @@ def get_chatgpt_response(message):
     )
     return response["choices"][0]["message"]["content"]
 
+# Rota do Webhook do Kommo
 @app.route("/kommo-webhook", methods=["POST"])
 def kommo_webhook():
     data = request.json
@@ -41,6 +42,11 @@ def kommo_webhook():
 
     return jsonify({"reply": reply})
 
+# 🚀 ROTA DE TESTE PARA SABER SE O SERVIDOR ESTÁ NO AR
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"status": "Luiza está online e rodando!"})
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))  # Render define a porta, então pegamos dinamicamente
-    app.run(host="0.0.0.0", port=port, debug=True)  # Agora Flask escuta na porta correta
+    app.run(host="0.0.0.0", port=port, debug=True)
