@@ -10,19 +10,18 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 KOMMO_WEBHOOK_URL = os.getenv("KOMMO_WEBHOOK_URL")
 
 # Configuração correta da OpenAI
-openai.api_key = OPENAI_API_KEY
+client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 # Função para gerar resposta da IA
 def get_chatgpt_response(message):
-    client = openai.OpenAI(api_key=OPENAI_API_KEY)
-response = client.chat.completions.create(
-     model="gpt-3.5-turbo",
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "Você é Luiza, assistente digital da equipe Evelyn Liu. Responda de forma acolhedora e humanizada, sem se passar pela Evelyn, e guie os leads para o VIP 21D ou consultas na Table Clinic."},
             {"role": "user", "content": message}
         ]
     )
-    return response["choices"][0]["message"]["content"]
+    return response.choices[0].message.content
 
 # Rota do Webhook do Kommo
 @app.route("/kommo-webhook", methods=["POST"])
