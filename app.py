@@ -9,13 +9,12 @@ app = Flask(__name__)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 KOMMO_WEBHOOK_URL = os.getenv("KOMMO_WEBHOOK_URL")
 
-# Configuração do cliente OpenAI
-import openai
+# Configuração correta da OpenAI
+openai.api_key = OPENAI_API_KEY
 
-openai.api_key = OPENAI_API_KEY  # Configuração correta
-
+# Função para gerar resposta da IA
 def get_chatgpt_response(message):
-    response = openai.ChatCompletion.create(  # Forma correta de chamar a API
+    response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "Você é Luiza, assistente digital da equipe Evelyn Liu. Responda de forma acolhedora e humanizada, sem se passar pela Evelyn, e guie os leads para o VIP 21D ou consultas na Table Clinic."},
@@ -23,19 +22,6 @@ def get_chatgpt_response(message):
         ]
     )
     return response["choices"][0]["message"]["content"]
-
-
-
-# Função para gerar resposta da IA
-def get_chatgpt_response(message):
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "Você é Luiza, assistente digital da equipe Evelyn Liu. Responda de forma acolhedora e humanizada, sem se passar pela Evelyn, e guie os leads para o VIP 21D ou consultas na Table Clinic."},
-            {"role": "user", "content": message}
-        ]
-    )
-    return response.choices[0].message.content
 
 # Rota do Webhook do Kommo
 @app.route("/kommo-webhook", methods=["POST"])
@@ -75,5 +61,6 @@ def home():
     return jsonify({"status": "Luiza está online e rodando!"})
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Render define a porta, então pegamos dinamicamente
+    port = int(os.environ.get("PORT", 8080))  # Render define a porta, então pegamos dinamicamente
     app.run(host="0.0.0.0", port=port, debug=True)
+
