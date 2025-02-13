@@ -5,12 +5,12 @@ import requests
 
 app = Flask(__name__)
 
-# Configuração da OpenAI API Key
-OPENAI_API_KEY = os.getenv("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")  # Pegando a chave da variável de ambiente
-openai.api_key = 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
+# Pegando as chaves das variáveis de ambiente (NÃO DEIXE EXPOSTAS NO CÓDIGO)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+KOMMO_WEBHOOK_URL = os.getenv("KOMMO_WEBHOOK_URL")
 
-# URL do Webhook do Kommo
-KOMMO_WEBHOOK_URL = os.getenv("https://luiza-assistente.onrender.com")  # Pegando a URL do Webhook do Kommo
+# Configuração da OpenAI API Key
+openai.api_key = OPENAI_API_KEY
 
 # Função para gerar resposta da IA
 def get_chatgpt_response(message):
@@ -37,7 +37,7 @@ def kommo_webhook():
             "lead_id": lead_id,
             "message": reply
         }
-        requests.post(https://luiza-assistente.onrender.com, json=response_payload)
+        requests.post(KOMMO_WEBHOOK_URL, json=response_payload)
 
     return jsonify({"reply": reply})
 
