@@ -12,7 +12,18 @@ KOMMO_WEBHOOK_URL = os.getenv("KOMMO_WEBHOOK_URL")
 # Configuração do cliente OpenAI
 import openai
 
-client = openai.Client(api_key=OPENAI_API_KEY)
+openai.api_key = OPENAI_API_KEY  # Configuração correta
+
+def get_chatgpt_response(message):
+    response = openai.ChatCompletion.create(  # Forma correta de chamar a API
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "Você é Luiza, assistente digital da equipe Evelyn Liu. Responda de forma acolhedora e humanizada, sem se passar pela Evelyn, e guie os leads para o VIP 21D ou consultas na Table Clinic."},
+            {"role": "user", "content": message}
+        ]
+    )
+    return response["choices"][0]["message"]["content"]
+
 
 
 # Função para gerar resposta da IA
