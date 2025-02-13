@@ -50,7 +50,7 @@ def kommo_webhook():
         # Medir tempo de resposta do Kommo
         start_time = time.time()
         try:
-            response = requests.post(KOMMO_WEBHOOK_URL, json=response_payload, timeout=5)
+            response = requests.post(KOMMO_WEBHOOK_URL, json=response_payload, timeout=15)
             end_time = time.time()
             print(f"⏳ Tempo de resposta do Kommo: {end_time - start_time:.2f} segundos")
 
