@@ -1,5 +1,6 @@
 flask
-openai==1.2.4  # OU a versão mais recente disponível
+openai==1.2.4  # OU a versão mais recente estável
 requests
 gunicorn
+httpx  # Biblioteca usada internamente pelo OpenAI
 
