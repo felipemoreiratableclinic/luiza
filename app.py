@@ -1,5 +1,6 @@
 import os
 import time
+import threading
 from flask import Flask, request, jsonify
 import openai
 import requests
@@ -26,6 +27,24 @@ def get_chatgpt_response(message):
         print(f"🔥 Erro OpenAI: {e}")
         return "Desculpe, estou enfrentando dificuldades técnicas no momento."
 
+def send_to_kommo(lead_id, message):
+    """Função para enviar a mensagem ao Kommo de forma assíncrona"""
+    try:
+        response_payload = {
+            "lead_id": lead_id,
+            "message": message
+        }
+        print("🚀 Enviando resposta ao Kommo em segundo plano...")
+        
+        # Timeout de 5s para não travar a API
+        response = requests.post(KOMMO_WEBHOOK_URL, json=response_payload, timeout=5)
+        print(f"📤 Resposta do Kommo: {response.status_code}, {response.text}")
+        
+    except requests.Timeout:
+        print("⏳ Timeout ao enviar ao Kommo! A mensagem pode não ter sido entregue.")
+    except requests.RequestException as e:
+        print(f"⚠️ Erro ao enviar ao Kommo: {e}")
+
 @app.route("/kommo-webhook", methods=["POST"])
 def kommo_webhook():
     try:
@@ -42,27 +61,10 @@ def kommo_webhook():
         reply = get_chatgpt_response(user_message)
         print(f"📝 Resposta da IA: {reply}")
 
-        response_payload = {
-            "lead_id": lead_id,
-            "message": reply
-        }
+        # Iniciar envio assíncrono ao Kommo
+        threading.Thread(target=send_to_kommo, args=(lead_id, reply), daemon=True).start()
 
-        # Medir tempo de resposta do Kommo
-        start_time = time.time()
-        try:
-            response = requests.post(KOMMO_WEBHOOK_URL, json=response_payload, timeout=15)
-            end_time = time.time()
-            print(f"⏳ Tempo de resposta do Kommo: {end_time - start_time:.2f} segundos")
-
-            if response.status_code != 200:
-                return jsonify({"error": "Erro ao enviar mensagem ao Kommo", "details": response.text}), 500
-        except requests.Timeout:
-            print("⏳ Timeout na requisição ao Kommo!")
-            return jsonify({"error": "Kommo demorou para responder"}), 504
-        except requests.RequestException as e:
-            print(f"⚠️ Erro ao enviar ao Kommo: {e}")
-            return jsonify({"error": "Erro ao enviar ao Kommo", "details": str(e)}), 500
-
+        # Responder imediatamente
         return jsonify({"reply": reply})
 
     except Exception as e:
