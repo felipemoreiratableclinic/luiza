@@ -11,8 +11,6 @@ app = Flask(__name__)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 KOMMO_WEBHOOK_URL = os.getenv("KOMMO_WEBHOOK_URL")
 KOMMO_TOKEN = os.getenv("KOMMO_TOKEN")  # Token de longa duração do Kommo
-KOMMO_CLIENT_ID = os.getenv("KOMMO_CLIENT_ID")  # Se necessário
-KOMMO_CLIENT_SECRET = os.getenv("KOMMO_CLIENT_SECRET")  # Se necessário
 
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
@@ -59,23 +57,23 @@ def kommo_webhook():
         headers_received = dict(request.headers)
         print(f"🔍 Todos os cabeçalhos recebidos: {headers_received}")  # Log de depuração
 
-        auth_header = request.headers.get("Authorization")
+        # Captura os dados do corpo da requisição
+        data = request.json
+        print(f"📩 Corpo da requisição recebida: {data}")
 
-        # Se o Token não foi enviado no cabeçalho, logamos o erro
-        if not auth_header:
-            print("❌ Nenhum Token foi enviado pelo Kommo no cabeçalho Authorization!")
+        # Captura o token se ele estiver no corpo da requisição
+        auth_token = data.get("token", None)
+
+        if auth_token:
+            print(f"✅ Token encontrado no corpo da requisição: {auth_token}")
+        else:
+            print("❌ Nenhum Token foi enviado no corpo da requisição.")
             return jsonify({"error": "Unauthorized", "details": "Token ausente"}), 401
 
-        expected_auth = f"Bearer {KOMMO_TOKEN}".strip()
-
-        # Comparação direta entre o token recebido e o esperado
-        if auth_header.strip() != expected_auth:
-            print(f"❌ Token incorreto! Recebido: {auth_header} | Esperado: {expected_auth}")
-            return jsonify({"error": "Unauthorized", "details": "Token inválido"}), 401
-
-        # Se passou na autenticação, processa a mensagem recebida
-        data = request.json
-        print(f"📩 Dados recebidos do Kommo: {data}")
+        # Verifica se o token enviado é válido
+        if auth_token.strip() != KOMMO_TOKEN:
+            print(f"❌ Token inválido! Recebido: {auth_token} | Esperado: {KOMMO_TOKEN}")
+            return jsonify({"error": "Unauthorized", "details": "Token incorreto"}), 401
 
         user_message = data.get("message", "")
         lead_id = data.get("lead_id", "")
