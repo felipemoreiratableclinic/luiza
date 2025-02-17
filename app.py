@@ -11,6 +11,8 @@ app = Flask(__name__)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 KOMMO_WEBHOOK_URL = os.getenv("KOMMO_WEBHOOK_URL")
 KOMMO_TOKEN = os.getenv("KOMMO_TOKEN")  # Token de longa duração do Kommo
+KOMMO_CLIENT_ID = os.getenv("KOMMO_CLIENT_ID")  # Se necessário
+KOMMO_CLIENT_SECRET = os.getenv("KOMMO_CLIENT_SECRET")  # Se necessário
 
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
@@ -53,24 +55,16 @@ def send_to_kommo(lead_id, message):
 def kommo_webhook():
     """Rota que recebe mensagens do Kommo e responde via IA"""
     try:
-        # Captura o cabeçalho de autenticação enviado pelo Kommo
-        auth_header = request.headers.get("Authorization")
-        print(f"🔍 Header de Autenticação recebido: {auth_header}")  # Log do token recebido
+        # Captura todos os cabeçalhos recebidos do Kommo
+        headers_received = dict(request.headers)
+        print(f"🔍 Todos os cabeçalhos recebidos: {headers_received}")  # Log de depuração
 
-        # Se o Token não foi enviado no cabeçalho, tentamos recuperá-lo
+        auth_header = request.headers.get("Authorization")
+
+        # Se o Token não foi enviado no cabeçalho, logamos o erro
         if not auth_header:
-            print("⚠️ Nenhum Token foi enviado. Tentando recuperar um novo Token da Kommo...")
-            
-            auth_url = "https://www.kommo.com/oauth2/access_token"  # URL da Kommo para autenticação
-            auth_response = requests.post(auth_url, json={"grant_type": "client_credentials"}, timeout=5)
-            
-            if auth_response.status_code == 200:
-                new_token = auth_response.json().get("access_token")
-                print(f"✅ Novo Token obtido: {new_token}")
-                auth_header = f"Bearer {new_token}"
-            else:
-                print("❌ Erro ao obter um novo Token da Kommo!")
-                return jsonify({"error": "Unauthorized", "details": "Token ausente"}), 401
+            print("❌ Nenhum Token foi enviado pelo Kommo no cabeçalho Authorization!")
+            return jsonify({"error": "Unauthorized", "details": "Token ausente"}), 401
 
         expected_auth = f"Bearer {KOMMO_TOKEN}".strip()
 
