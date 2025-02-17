@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 # Configurações de ambiente
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-KOMMO_WEBHOOK_URL = os.getenv("KOMMO_WEBHOOK_URL")  # Certifique-se que essa URL está correta!
+KOMMO_WEBHOOK_URL = os.getenv("KOMMO_WEBHOOK_URL")  # Certifique-se que esta URL está correta!
 KOMMO_TOKEN = os.getenv("KOMMO_TOKEN")
 
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
@@ -31,19 +31,22 @@ def get_chatgpt_response(message):
 
 def send_to_kommo(chat_id, contact_id, talk_id, message):
     """Envia a resposta ao Kommo"""
-    if not message.strip():  # Evita mensagens vazias
+    message = message.strip()  # Evita mensagens vazias
+    if not message:
         print("⚠️ Mensagem vazia detectada! Não será enviada ao Kommo.")
         return
 
     try:
         response_payload = {
-            "message": [{
-                "chat_id": chat_id,
-                "contact_id": contact_id,
-                "talk_id": talk_id,
-                "text": message,
-                "type": "outgoing"  # Importante garantir que seja uma mensagem de saída
-            }]
+            "messages": [  # Alterado de "message" para "messages"
+                {
+                    "chat_id": chat_id,
+                    "contact_id": contact_id,
+                    "talk_id": talk_id,
+                    "text": message,
+                    "type": "text"  # Garantindo que seja texto puro
+                }
+            ]
         }
 
         headers = {
@@ -54,8 +57,10 @@ def send_to_kommo(chat_id, contact_id, talk_id, message):
         print(f"🚀 Enviando resposta ao Kommo com payload: {response_payload}")
         response = requests.post(KOMMO_WEBHOOK_URL, json=response_payload, headers=headers, timeout=5)
 
+        print(f"🔄 Resposta do Kommo: {response.status_code} - {response.text}")
+
         if response.status_code == 200:
-            print(f"✅ Resposta enviada ao Kommo com sucesso: {response.text}")
+            print(f"✅ Resposta enviada ao Kommo com sucesso!")
         else:
             print(f"⚠️ Erro ao enviar resposta ao Kommo! Código: {response.status_code}, Resposta: {response.text}")
 
@@ -75,10 +80,10 @@ def kommo_webhook():
         print(f"📩 Corpo da requisição recebida: {data}")
 
         # Captura os IDs necessários
-        chat_id = data.get("message[add][0][chat_id]", "")
-        contact_id = data.get("message[add][0][contact_id]", "")
-        talk_id = data.get("message[add][0][talk_id]", "")
-        user_message = data.get("message[add][0][text]", "")
+        chat_id = data.get("message[add][0][chat_id]", "").strip()
+        contact_id = data.get("message[add][0][contact_id]", "").strip()
+        talk_id = data.get("message[add][0][talk_id]", "").strip()
+        user_message = data.get("message[add][0][text]", "").strip()
 
         if not user_message:
             return jsonify({"error": "Mensagem vazia recebida"}), 400
