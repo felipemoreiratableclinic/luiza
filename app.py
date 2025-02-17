@@ -64,14 +64,13 @@ def kommo_webhook():
         # Captura o token na URL
         token_from_url = request.args.get("token")
 
-        if token_from_url:
-            print(f"✅ Token capturado na URL: {token_from_url}")
-        else:
+        # Se a requisição veio da própria API do sistema, ignora a validação do Token
+        if "python-requests" in headers_received.get("User-Agent", ""):
+            print("🔄 Requisição interna detectada. Pulando validação de Token.")
+        elif not token_from_url:
             print("❌ Nenhum Token foi enviado na URL.")
             return jsonify({"error": "Unauthorized", "details": "Token ausente"}), 401
-
-        # Verifica se o token é válido
-        if token_from_url.strip() != KOMMO_TOKEN:
+        elif token_from_url.strip() != KOMMO_TOKEN:
             print(f"❌ Token incorreto! Recebido: {token_from_url} | Esperado: {KOMMO_TOKEN}")
             return jsonify({"error": "Unauthorized", "details": "Token inválido"}), 401
 
