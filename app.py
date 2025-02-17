@@ -12,6 +12,15 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 KOMMO_WEBHOOK_URL = os.getenv("KOMMO_WEBHOOK_URL")
 KOMMO_TOKEN = os.getenv("KOMMO_TOKEN")  # Token de longa duração do Kommo
 
+# Lista de IPs permitidos do Kommo (ajuste conforme necessário)
+KOMMO_ALLOWED_IPS = [
+    "173.233.147.83",  # Exemplo do log
+    "142.0.204.92",
+    "172.68.174.230",
+    "108.162.246.77",
+    "172.68.174.138",
+]
+
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 def get_chatgpt_response(message):
@@ -64,11 +73,17 @@ def kommo_webhook():
         # Captura o token na URL
         token_from_url = request.args.get("token")
 
+        # Captura o IP do cliente
+        client_ip = request.headers.get("Cf-Connecting-Ip", request.remote_addr)
+        print(f"🌐 IP do Cliente: {client_ip}")
+
         # Se a requisição veio da própria API do sistema, ignora a validação do Token
         if "python-requests" in headers_received.get("User-Agent", ""):
             print("🔄 Requisição interna detectada. Pulando validação de Token.")
+        elif client_ip in KOMMO_ALLOWED_IPS:
+            print(f"✅ Requisição de IP autorizado ({client_ip}). Pulando validação de Token.")
         elif not token_from_url:
-            print("❌ Nenhum Token foi enviado na URL.")
+            print("❌ Nenhum Token foi enviado na URL e IP não está na lista de permitidos.")
             return jsonify({"error": "Unauthorized", "details": "Token ausente"}), 401
         elif token_from_url.strip() != KOMMO_TOKEN:
             print(f"❌ Token incorreto! Recebido: {token_from_url} | Esperado: {KOMMO_TOKEN}")
