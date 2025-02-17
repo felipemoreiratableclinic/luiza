@@ -15,6 +15,7 @@ KOMMO_TOKEN = os.getenv("KOMMO_TOKEN")  # Token de longa duração do Kommo
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 def get_chatgpt_response(message):
+    """Gera uma resposta da IA para o lead"""
     try:
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -30,7 +31,7 @@ def get_chatgpt_response(message):
         return "Desculpe, estou enfrentando dificuldades técnicas no momento."
 
 def send_to_kommo(lead_id, message):
-    """Função para enviar a mensagem ao Kommo de forma assíncrona"""
+    """Envia a resposta para o Kommo de forma assíncrona"""
     try:
         response_payload = {
             "lead_id": lead_id,
@@ -50,14 +51,28 @@ def send_to_kommo(lead_id, message):
 
 @app.route("/kommo-webhook", methods=["POST"])
 def kommo_webhook():
+    """Rota que recebe mensagens do Kommo e responde via IA"""
     try:
-        # Verificação do token de autenticação
+        # Captura o cabeçalho de autorização enviado pelo Kommo
         auth_header = request.headers.get("Authorization")
-        if not auth_header or f"Bearer {KOMMO_TOKEN}" not in auth_header:
-            return jsonify({"error": "Unauthorized"}), 401  # Retorna erro se não estiver autenticado
+        print(f"🔍 Header de Autenticação recebido: {auth_header}")  # Log do token recebido
 
+        # Se o token não for enviado, retorna erro 401 (não autorizado)
+        if not auth_header:
+            print("❌ Nenhum token foi enviado pelo Kommo!")
+            return jsonify({"error": "Unauthorized", "details": "Token ausente"}), 401
+
+        # Formatar corretamente o token esperado
+        expected_auth = f"Bearer {KOMMO_TOKEN}".strip()
+
+        # Comparação direta entre o token recebido e o esperado
+        if auth_header.strip() != expected_auth:
+            print(f"❌ Token incorreto! Recebido: {auth_header} | Esperado: {expected_auth}")
+            return jsonify({"error": "Unauthorized", "details": "Token inválido"}), 401
+
+        # Se passou na autenticação, processa a mensagem recebida
         data = request.json
-        print(f"📩 Dados recebidos: {data}")
+        print(f"📩 Dados recebidos do Kommo: {data}")
 
         user_message = data.get("message", "")
         lead_id = data.get("lead_id", "")
@@ -65,14 +80,14 @@ def kommo_webhook():
         if not user_message:
             return jsonify({"error": "Mensagem vazia recebida"}), 400
 
-        # Gerar resposta da IA
+        # Gera resposta da IA
         reply = get_chatgpt_response(user_message)
         print(f"📝 Resposta da IA: {reply}")
 
         # Iniciar envio assíncrono ao Kommo
         threading.Thread(target=send_to_kommo, args=(lead_id, reply), daemon=True).start()
 
-        # Responder imediatamente
+        # Responder imediatamente ao Kommo
         return jsonify({"reply": reply})
 
     except Exception as e:
@@ -83,6 +98,7 @@ def kommo_webhook():
 
 @app.route("/", methods=["GET"])
 def home():
+    """Verifica se a API está rodando"""
     return jsonify({"status": "Luiza está online e rodando!"})
 
 if __name__ == "__main__":
