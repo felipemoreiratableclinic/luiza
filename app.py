@@ -7,8 +7,10 @@ import requests
 
 app = Flask(__name__)
 
+# Pegando as variáveis de ambiente do Render
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 KOMMO_WEBHOOK_URL = os.getenv("KOMMO_WEBHOOK_URL")
+KOMMO_TOKEN = os.getenv("KOMMO_TOKEN")  # Token de longa duração do Kommo
 
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
@@ -36,8 +38,9 @@ def send_to_kommo(lead_id, message):
         }
         print("🚀 Enviando resposta ao Kommo em segundo plano...")
         
-        # Timeout de 5s para não travar a API
-        response = requests.post(KOMMO_WEBHOOK_URL, json=response_payload, timeout=5)
+        headers = {"Authorization": f"Bearer {KOMMO_TOKEN}"}  # Adicionando autenticação no envio
+        response = requests.post(KOMMO_WEBHOOK_URL, json=response_payload, headers=headers, timeout=5)
+        
         print(f"📤 Resposta do Kommo: {response.status_code}, {response.text}")
         
     except requests.Timeout:
@@ -48,6 +51,11 @@ def send_to_kommo(lead_id, message):
 @app.route("/kommo-webhook", methods=["POST"])
 def kommo_webhook():
     try:
+        # Verificação do token de autenticação
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or f"Bearer {KOMMO_TOKEN}" not in auth_header:
+            return jsonify({"error": "Unauthorized"}), 401  # Retorna erro se não estiver autenticado
+
         data = request.json
         print(f"📩 Dados recebidos: {data}")
 
