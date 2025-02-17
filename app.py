@@ -57,12 +57,12 @@ def kommo_webhook():
         headers_received = dict(request.headers)
         print(f"🔍 Todos os cabeçalhos recebidos: {headers_received}")  # Log de depuração
 
-        # Captura os dados do corpo da requisição
-        data = request.json
+        # Captura os dados enviados pelo Kommo (agora como formulário)
+        data = request.form.to_dict()  # Convertendo form-urlencoded para dicionário
         print(f"📩 Corpo da requisição recebida: {data}")
 
         # Captura o token se ele estiver no corpo da requisição
-        auth_token = data.get("token", None)
+        auth_token = data.get("token")
 
         if auth_token:
             print(f"✅ Token encontrado no corpo da requisição: {auth_token}")
