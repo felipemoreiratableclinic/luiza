@@ -57,26 +57,27 @@ def kommo_webhook():
         headers_received = dict(request.headers)
         print(f"🔍 Todos os cabeçalhos recebidos: {headers_received}")  # Log de depuração
 
-        # Captura os dados enviados pelo Kommo (agora como formulário)
-        data = request.form.to_dict()  # Convertendo form-urlencoded para dicionário
+        # Captura os dados do formulário
+        data = request.form.to_dict()
         print(f"📩 Corpo da requisição recebida: {data}")
 
-        # Captura o token se ele estiver no corpo da requisição
-        auth_token = data.get("token")
+        # Captura o token na URL
+        token_from_url = request.args.get("token")
 
-        if auth_token:
-            print(f"✅ Token encontrado no corpo da requisição: {auth_token}")
+        if token_from_url:
+            print(f"✅ Token capturado na URL: {token_from_url}")
         else:
-            print("❌ Nenhum Token foi enviado no corpo da requisição.")
+            print("❌ Nenhum Token foi enviado na URL.")
             return jsonify({"error": "Unauthorized", "details": "Token ausente"}), 401
 
-        # Verifica se o token enviado é válido
-        if auth_token.strip() != KOMMO_TOKEN:
-            print(f"❌ Token inválido! Recebido: {auth_token} | Esperado: {KOMMO_TOKEN}")
-            return jsonify({"error": "Unauthorized", "details": "Token incorreto"}), 401
+        # Verifica se o token é válido
+        if token_from_url.strip() != KOMMO_TOKEN:
+            print(f"❌ Token incorreto! Recebido: {token_from_url} | Esperado: {KOMMO_TOKEN}")
+            return jsonify({"error": "Unauthorized", "details": "Token inválido"}), 401
 
-        user_message = data.get("message", "")
-        lead_id = data.get("lead_id", "")
+        # Captura a mensagem e o ID do lead corretamente
+        user_message = data.get("message[add][0][text]", "")
+        lead_id = data.get("message[add][0][entity_id]", "")
 
         if not user_message:
             return jsonify({"error": "Mensagem vazia recebida"}), 400
