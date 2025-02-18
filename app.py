@@ -8,9 +8,9 @@ app = Flask(__name__)
 # Configuração de logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# Configuração do Webhook no Kommo
-KOMMO_WEBHOOK_URL = os.getenv("KOMMO_WEBHOOK_URL")  # URL correta do webhook no Kommo
-KOMMO_TOKEN = os.getenv("KOMMO_API_TOKEN")  # Token de autenticação
+# Configurações do Kommo
+KOMMO_WEBHOOK_URL = "https://api.kommo.com/v4/leads"  # URL corrigida para .com
+KOMMO_TOKEN = os.getenv("KOMMO_API_TOKEN")  # Defina a variável de ambiente corretamente
 
 @app.route("/kommo-webhook", methods=["POST"])
 def kommo_webhook():
@@ -26,12 +26,12 @@ def kommo_webhook():
         
         logging.info(f"Dados recebidos: {data}")
         
-        # Verifica se há uma mensagem válida no payload
+        # Valida se há uma mensagem válida
         if not data or "message[add][0][text]" not in data:
             logging.warning("Mensagem vazia recebida ou dados inválidos")
             return jsonify({"error": "Mensagem vazia recebida"}), 400
         
-        # Extrai as informações necessárias
+        # Extrai informações necessárias
         message_text = data.get("message[add][0][text]")
         chat_id = data.get("message[add][0][chat_id]")
         contact_id = data.get("message[add][0][contact_id]")
@@ -59,13 +59,12 @@ def kommo_webhook():
             ]
         }
         
-        # Cabeçalhos corretos
+        # Cabeçalhos corretos com Authorization e Content-Type
         headers = {
             "Authorization": f"Bearer {KOMMO_TOKEN}",
             "Content-Type": "application/json"
         }
         
-        # Envia a resposta ao Webhook configurado no Kommo
         logging.info(f"Enviando resposta ao Kommo: {payload}")
         response = requests.post(KOMMO_WEBHOOK_URL, json=payload, headers=headers)
         
