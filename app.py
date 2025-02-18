@@ -16,9 +16,14 @@ KOMMO_TOKEN = os.getenv("KOMMO_API_TOKEN")  # Defina a variável de ambiente cor
 def kommo_webhook():
     try:
         logging.info("Recebendo requisição do webhook do Kommo")
+        logging.info(f"Content-Type recebido: {request.content_type}")
         
-        # Obtém o corpo da requisição recebida
-        data = request.json or request.form.to_dict()
+        # Obtém o corpo da requisição considerando o Content-Type
+        if request.content_type == "application/json":
+            data = request.get_json()
+        else:
+            data = request.form.to_dict()
+        
         logging.info(f"Dados recebidos: {data}")
         
         # Valida se há uma mensagem válida
