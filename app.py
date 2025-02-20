@@ -9,11 +9,11 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Configurações do Kommo obtidas do ambiente do Render
-KOMMO_WEBHOOK_URL = os.getenv("KOMMO_WEBHOOK_URL")  # Pegando a URL do ambiente
-KOMMO_TOKEN = os.getenv("KOMMO_API_TOKEN")  # Pegando o token do ambiente
+KOMMO_WEBHOOK_URL = "https://admamotablecliniccombr.amocrm.com/api/v4/messages"
+KOMMO_TOKEN = os.getenv("KOMMO_TOKEN")  # Pegando o token do ambiente
 
 if not KOMMO_WEBHOOK_URL or not KOMMO_TOKEN:
-    logging.error("Erro: KOMMO_WEBHOOK_URL ou KOMMO_API_TOKEN não estão definidos no ambiente!")
+    logging.error("Erro: KOMMO_WEBHOOK_URL ou KOMMO_TOKEN não estão definidos no ambiente!")
 
 @app.route("/kommo-webhook", methods=["POST"])
 def kommo_webhook():
@@ -37,12 +37,10 @@ def kommo_webhook():
         # Extrai informações necessárias
         message_text = data.get("message[add][0][text]")
         chat_id = data.get("message[add][0][chat_id]")
-        contact_id = data.get("message[add][0][contact_id]")
-        talk_id = data.get("message[add][0][talk_id]")
 
-        if not all([chat_id, contact_id, talk_id]):
-            logging.error("Campos obrigatórios ausentes no payload")
-            return jsonify({"error": "Campos obrigatórios ausentes"}), 400
+        if not chat_id:
+            logging.error("Chat ID ausente no payload")
+            return jsonify({"error": "Chat ID ausente"}), 400
 
         logging.info(f"Mensagem recebida: {message_text}")
 
@@ -51,15 +49,8 @@ def kommo_webhook():
 
         # Monta o payload da resposta
         payload = {
-            "message": [
-                {
-                    "chat_id": chat_id,
-                    "contact_id": contact_id,
-                    "talk_id": talk_id,
-                    "text": response_text,
-                    "type": "outgoing"
-                }
-            ]
+            "chat_id": chat_id,
+            "text": response_text
         }
 
         # Cabeçalhos corretos com Authorization e Content-Type
