@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import requests
 import os
 import logging
+import uuid  # Para gerar IDs únicos
 
 app = Flask(__name__)
 
@@ -40,10 +41,15 @@ def kommo_webhook():
         # Resposta automática da Luiza
         response_text = "Olá! Como posso te ajudar hoje? 😊"
 
-        # ✅ Correção do payload
+        # ✅ Correção do payload com "messages" e "message_id"
         payload = {
-            "chat_id": chat_id,
-            "text": response_text
+            "messages": [
+                {
+                    "chat_id": chat_id,
+                    "text": response_text,
+                    "message_id": str(uuid.uuid4())  # Gera um ID único
+                }
+            ]
         }
 
         # Cabeçalhos corretos com Authorization e Content-Type
@@ -55,7 +61,7 @@ def kommo_webhook():
         logging.info(f"Enviando resposta ao Kommo: {payload}")
 
         # ⚠️ Desativa temporariamente a verificação SSL para testes
-        response = requests.post(os.getenv("KOMMO_WEBHOOK_URL"), json=payload, headers=headers, verify=False)
+        response = requests.post("https://admamotablecliniccombr.amocrm.com/api/v4/chats/messages", json=payload, headers=headers, verify=False)
 
         logging.info(f"Resposta do Kommo: {response.status_code} - {response.text}")
 
