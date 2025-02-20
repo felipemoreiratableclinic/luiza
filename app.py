@@ -8,13 +8,6 @@ app = Flask(__name__)
 # Configuração de logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# Configurações do Kommo obtidas do ambiente do Render
-KOMMO_WEBHOOK_URL = "https://admamotablecliniccombr.amocrm.com/api/v4/messages"
-KOMMO_TOKEN = os.getenv("KOMMO_TOKEN")  # Pegando o token do ambiente
-
-if not KOMMO_WEBHOOK_URL or not KOMMO_TOKEN:
-    logging.error("Erro: KOMMO_WEBHOOK_URL ou KOMMO_TOKEN não estão definidos no ambiente!")
-
 @app.route("/kommo-webhook", methods=["POST"])
 def kommo_webhook():
     try:
@@ -47,7 +40,7 @@ def kommo_webhook():
         # Resposta automática da Luiza
         response_text = "Olá! Como posso te ajudar hoje? 😊"
 
-        # Monta o payload da resposta
+        # ✅ Correção do payload
         payload = {
             "chat_id": chat_id,
             "text": response_text
@@ -55,14 +48,14 @@ def kommo_webhook():
 
         # Cabeçalhos corretos com Authorization e Content-Type
         headers = {
-            "Authorization": f"Bearer {KOMMO_TOKEN}",
+            "Authorization": f"Bearer {os.getenv('KOMMO_TOKEN')}",
             "Content-Type": "application/json"
         }
 
         logging.info(f"Enviando resposta ao Kommo: {payload}")
 
         # ⚠️ Desativa temporariamente a verificação SSL para testes
-        response = requests.post(KOMMO_WEBHOOK_URL, json=payload, headers=headers, verify=False)
+        response = requests.post(os.getenv("KOMMO_WEBHOOK_URL"), json=payload, headers=headers, verify=False)
 
         logging.info(f"Resposta do Kommo: {response.status_code} - {response.text}")
 
